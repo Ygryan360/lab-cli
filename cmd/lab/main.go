@@ -8,6 +8,7 @@ import (
 	"github.com/ygryan360/lab-cli/internal/config"
 	"github.com/ygryan360/lab-cli/internal/history"
 	"github.com/ygryan360/lab-cli/internal/project"
+	"github.com/ygryan360/lab-cli/internal/terminal"
 	"github.com/ygryan360/lab-cli/internal/tui"
 )
 
@@ -27,6 +28,8 @@ func main() {
 	switch cmd {
 	case "open":
 		runOpen(rest)
+	case "term":
+		runTerm(rest)
 	case "recent":
 		runRecent()
 	case "search":
@@ -70,6 +73,41 @@ func runTUI() {
 	if err := app.Run(); err != nil {
 		die("TUI error: %v", err)
 	}
+}
+
+func runTerm(args []string) {
+	if len(args) == 0 {
+		die("Usage: lab term <project-name>")
+	}
+	name := args[0]
+	cfg, _, cats := loadAll()
+
+	var found *project.Project
+	for _, cat := range cats {
+		for _, p := range cat.Projects {
+			if p.Name == name {
+				cp := p
+				found = &cp
+				break
+			}
+		}
+		if found != nil {
+			break
+		}
+	}
+	if found == nil {
+		die("Project %q not found", name)
+	}
+
+	term := cfg.Terminal
+	if term == "" {
+		term = terminal.Detect()
+	}
+
+	if err := terminal.OpenTab(term, found.Path, found.Name); err != nil {
+		die("%v", err)
+	}
+	fmt.Printf("⌨  Opened terminal tab → %s\n", found.Name)
 }
 
 func runOpen(args []string) {
@@ -261,6 +299,7 @@ USAGE:
   lab                          Open interactive TUI
   lab open <project>           Open a project in VSCode
   lab open <project> -p <prof> Open with specific profile
+  lab term <project>           Open a terminal tab in project directory
   lab recent                   List recently opened projects
   lab search <query>           Search projects
   lab profiles                 Manage VSCode profiles

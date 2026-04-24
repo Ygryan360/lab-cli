@@ -8,6 +8,7 @@ import (
 	"github.com/ygryan360/lab-cli/internal/config"
 	"github.com/ygryan360/lab-cli/internal/history"
 	"github.com/ygryan360/lab-cli/internal/project"
+	"github.com/ygryan360/lab-cli/internal/terminal"
 	"github.com/ygryan360/lab-cli/internal/vscode"
 )
 
@@ -118,6 +119,11 @@ func (a *App) handleNormalKey(k KeyEvent) bool {
 				a.pendingProject = p
 				a.profileCursor = 0
 				a.currentMode = modeProfilePick
+			}
+		case 't':
+			p := a.selectedProject()
+			if p != nil {
+				a.openTerminalTab(p)
 			}
 		case 'r':
 			a.activePanel = panelRecent
@@ -309,6 +315,18 @@ func (a *App) openProject(p *project.Project) {
 	a.pendingProject = p
 	a.profileCursor = 0
 	a.currentMode = modeProfilePick
+}
+
+func (a *App) openTerminalTab(p *project.Project) {
+	term := a.cfg.Terminal
+	if term == "" {
+		term = terminal.Detect()
+	}
+	if err := terminal.OpenTab(term, p.Path, p.Name); err != nil {
+		a.statusMsg = fmt.Sprintf("⚠  Terminal error: %v", err)
+		return
+	}
+	a.statusMsg = fmt.Sprintf("⌨  Opened tab → %s", p.Name)
 }
 
 func (a *App) launchVSCode(p *project.Project, profile string) {
@@ -559,7 +577,7 @@ func (a *App) renderFooter(sb *strings.Builder, row int) {
 			row++
 		}
 	} else {
-		help := Dim + " [↑↓] Navigate  [Tab] Switch panel  [Enter] Open  [/] Search  [p] Profile  [r] Recent  [q] Quit" + Reset
+		help := Dim + " [↑↓] Navigate  [Tab] Switch panel  [Enter] Open VSCode  [t] Terminal tab  [/] Search  [p] Profile  [r] Recent  [q] Quit" + Reset
 		writeLine(sb, row, 1, help)
 		row++
 		if a.statusMsg != "" {

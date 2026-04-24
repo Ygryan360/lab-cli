@@ -20,17 +20,17 @@ type Config struct {
 	DefaultProfile   string            `json:"default_profile"`
 	Profiles         []Profile         `json:"profiles"`
 	CategoryDefaults []CategoryDefault `json:"category_defaults"`
+	Terminal         string            `json:"terminal"`
 }
 
 func DefaultConfig() *Config {
 	home, _ := os.UserHomeDir()
 	return &Config{
-		LabPath:        filepath.Join(home, "lab"),
-		DefaultProfile: "Default",
-		Profiles: []Profile{
-			{Name: "Default"},
-		},
+		LabPath:          filepath.Join(home, "lab"),
+		DefaultProfile:   "Default",
+		Profiles:         []Profile{{Name: "Default"}},
 		CategoryDefaults: []CategoryDefault{},
+		Terminal:         "kitty",
 	}
 }
 
